@@ -19,8 +19,11 @@ class QuestionTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="testpassword")
         self.question = Question.objects.create(title='Test Question', content='Test Content', author=self.user, category='frontend')
-        pass
-
 
     def test_detail_question(self):
-        pass
+        url = reverse('question-detail', kwargs={'pk': self.question.id})
+        response = self.client.get(url)
+        expacted_data = QuestionSerializer(self.question).data
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expacted_data)
