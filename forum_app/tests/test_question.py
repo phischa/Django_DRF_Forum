@@ -4,8 +4,8 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework.authtoken.models import Token 
 from django.contrib.auth.models import User
-from forum_app.models import Question, Like
-from forum_app.api.serializers import QuestionSerializer, LikeSerializer
+from forum_app.models import Question, Like, Answer
+from forum_app.api.serializers import QuestionSerializer, LikeSerializer, AnswerSerializer
 
 
 
@@ -60,7 +60,6 @@ class QuestionTest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-
     def test_list_post_question(self):
         url = reverse('question-list')
         data= {'title':'Question1',
@@ -83,16 +82,37 @@ class QuestionTest(APITestCase):
         self.assertEqual(Question.objects.count(), 1)
         self.assertEqual(Question.objects.get().author, self.user)
 
+
 class AnswerTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="testpassword")
         self.question = Question.objects.create(title='Test Question', content='Test Content', author=self.user, category='frontend')
+        self.answer = Answer.objects.create(content='Test Answer', author=self.user, question=self.question)
         # self.client = APIClient()
         # self.client.login(username="testuser", password="testpassword")
-
         self.token = Token.objects.create(user=self.user)
         self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key )
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
     def test_get_answer(self):
-        pass
+        url = reverse('answer-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def test_list_post_answer(self):
+        url = reverse('anser-list-create')
+        data= {'content':'Answer2',
+                'author':self.user.id,
+                'question':self.question}
+        
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_detail_answer(self):
+        url = reverse('answer-detail', kwargs={'pk': self.answer.id})
+        response = self.client.get(url)
+        expected_data = AnswerSerializer(self.answer).data
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_data)
