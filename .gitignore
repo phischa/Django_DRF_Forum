@@ -139,3 +139,7 @@ GitHub.sublime-settings
 
 # Scripts
 *.sh
+
+# Docker
+Dockerfile
+.dockerignore
