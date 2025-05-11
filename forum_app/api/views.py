@@ -32,6 +32,22 @@ class AnswerListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def get_queryset(self):
+        queryset = Answer.objects.all()
+
+        """ Query Paramenter: Filter können zusammengefügt werden und ermöglichen so eine genauer Suchanfrage
+        z.B. author: bob & content contains: 'Django'.
+        URL: http://127.0.0.1:8000/api/forum/answers/?content=Django&author=bob  """
+        content_param = self.request.query_params.get('content', None)
+        if content_param is not None:
+            queryset = queryset.filter(content__icontains=content_param)
+
+        username_param = self.request.query_params.get('author', None)
+        if username_param is not None:
+            queryset = queryset.filter(author__username=username_param)
+
+        return queryset
+
 class AnswerDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
